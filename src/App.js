@@ -1,25 +1,824 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState, useEffect, useRef } from "react";
 
-function App() {
+window.storage = {
+  get: async (key) => {
+    const val = localStorage.getItem(key);
+    return val ? { value: val } : null;
+  },
+  set: async (key, value) => {
+    localStorage.setItem(key, value);
+    return { value };
+  },
+};
+const BASE_WARDROBE = {
+  tops: [
+    { id: "t1", name: "Fjällräven Charcoal Tee", color: "#4a4a4a", type: "T-Shirt" },
+    { id: "t2", name: "Laurel Creek Long Sleeve (Navy)", color: "#1a2a4a", type: "Long Sleeve" },
+    { id: "t3", name: "Villanova Tee (Navy)", color: "#1e2d5a", type: "T-Shirt" },
+    { id: "t4", name: "'Have a Day' White Long Sleeve", color: "#f5f5f5", type: "Long Sleeve" },
+    { id: "t5", name: "Black Tee (Everlane)", color: "#1a1a1a", type: "T-Shirt" },
+    { id: "t6", name: "Dark Olive/Charcoal Tee", color: "#3d3d2e", type: "T-Shirt" },
+    { id: "t7", name: "Dark Olive Performance Tee", color: "#4a4a35", type: "T-Shirt" },
+    { id: "t8", name: "Zurich Classic White Tee (A&F)", color: "#f0f0f0", type: "T-Shirt" },
+    { id: "t9", name: "RVCA Teal/Forest Green Tee", color: "#2d6b5a", type: "T-Shirt" },
+    { id: "t10", name: "Eddie Bauer White Tee", color: "#f8f8f8", type: "T-Shirt" },
+    { id: "t11", name: "White Tiger Embroidered Tee", color: "#f5f2ee", type: "T-Shirt" },
+    { id: "t12", name: "ATO Blue Pocket Tee (Comfort Colors)", color: "#7a9db5", type: "T-Shirt" },
+    { id: "t13", name: "St. Andrews Links Powder Blue Tee", color: "#8bb5cc", type: "T-Shirt" },
+    { id: "t14", name: "Villanova Navy V-Logo Tee", color: "#0d1b3e", type: "T-Shirt" },
+    { id: "t15", name: "Vineyard Vines Coral Tee", color: "#e8705a", type: "T-Shirt" },
+    { id: "t16", name: "Laurel Creek Teal Long Sleeve", color: "#3a7a8a", type: "Long Sleeve" },
+    { id: "t17", name: "A&F Washed Olive Oversized Tee", color: "#6b6b45", type: "T-Shirt" },
+    { id: "t18", name: "Pebble Beach Grey Hooded LS", color: "#6b6b6b", type: "Long Sleeve" },
+    { id: "t19", name: "Olive/Taupe Hooded Long Sleeve", color: "#7a7055", type: "Long Sleeve" },
+  ],
+  polos: [
+    { id: "p1", name: "Masters x Peter Millar Mint Stripe Polo", color: "#c8e8d8", type: "Polo" },
+    { id: "p2", name: "TravisMathew White Stripe Polo", color: "#f0f0f0", type: "Polo" },
+    { id: "p3", name: "Breezy White Splatter Polo", color: "#f5f5f5", type: "Polo" },
+    { id: "p4", name: "Ryder Cup 2025 Navy Polo", color: "#1e2d5a", type: "Polo" },
+    { id: "p5", name: "Laurel Creek Navy Floral Polo", color: "#2a3a5a", type: "Polo" },
+    { id: "p6", name: "Peter Millar Burgundy Floral Polo", color: "#7a1a3a", type: "Polo" },
+    { id: "p7", name: "Peter Millar Villanova Navy Polo", color: "#0d1b3e", type: "Polo" },
+  ],
+  midlayers: [
+    { id: "m1", name: "AllSaints Slate Grey Merino Crewneck", color: "#5a6a7a", type: "Sweater" },
+    { id: "m2", name: "Lands' End Cream Ribbed Knit Sweater", color: "#e8dcc8", type: "Sweater" },
+    { id: "m3", name: "Bad Birdie Light Grey Quarter-Zip", color: "#c0c8d0", type: "Quarter-Zip" },
+    { id: "m4", name: "Masters Grey Quarter-Zip", color: "#5a6870", type: "Quarter-Zip" },
+    { id: "m5", name: "Polo Ralph Lauren Cream Quarter-Zip", color: "#f0ead8", type: "Quarter-Zip" },
+    { id: "m6", name: "Goodfellow Oatmeal Snap Pullover", color: "#d8d0c0", type: "Pullover" },
+    { id: "m7", name: "Villanova Crewneck Sweatshirt (Grey/Cream)", color: "#c8c0b0", type: "Sweatshirt" },
+    { id: "m8", name: "A&F Grey Crewneck Sweatshirt", color: "#c0c0c0", type: "Sweatshirt" },
+    { id: "m9", name: "A&F Black Hoodie", color: "#1a1a1a", type: "Hoodie" },
+    { id: "m10", name: "Nike Black Soccer Hoodie", color: "#1a1a1a", type: "Hoodie" },
+    { id: "m11", name: "Villanova Light Blue Hoodie", color: "#90c8e0", type: "Hoodie" },
+    { id: "m12", name: "Villanova Navy Performance Hoodie", color: "#0d1b3e", type: "Hoodie" },
+    { id: "m13", name: "Johnnie-O Grey Stripe Quarter-Zip Hoodie", color: "#a0a8b0", type: "Quarter-Zip" },
+    { id: "m14", name: "TravisMathew Navy Quarter-Zip Hoodie", color: "#1e2d5a", type: "Quarter-Zip" },
+    { id: "m15", name: "Peter Millar Villanova Blue Quarter-Zip", color: "#2a4a8a", type: "Quarter-Zip" },
+    { id: "m16", name: "Peter Millar Grey Stripe Quarter-Zip", color: "#a8b0b8", type: "Quarter-Zip" },
+    { id: "m17", name: "Masters Grey Stripe Hoodie (Peter Millar)", color: "#9aa0a8", type: "Hoodie" },
+    { id: "m18", name: "Southern Tide White Stripe Quarter-Zip", color: "#e8eef5", type: "Quarter-Zip" },
+  ],
+  shirts: [
+    { id: "s1", name: "Uniqlo Black Linen Button-Down", color: "#1a1a1a", type: "Button-Down" },
+    { id: "s2", name: "Navy Linen Button-Down (snap)", color: "#1e2d5a", type: "Button-Down" },
+    { id: "s3", name: "Marine Layer Grey Plaid Shacket", color: "#6a7080", type: "Shacket" },
+    { id: "s4", name: "Vissla Blue Plaid Hooded Shacket", color: "#7a9ab8", type: "Shacket" },
+  ],
+  outerwear: [
+    { id: "o1", name: "A&F Black Zip Overshirt Jacket", color: "#1a1a1a", type: "Jacket" },
+    { id: "o2", name: "Villanova Navy Fleece Vest", color: "#0d1b3e", type: "Vest" },
+    { id: "o3", name: "Villanova Navy Quilted Vest", color: "#0d1b3e", type: "Vest" },
+  ],
+  bottoms: [
+    { id: "b1", name: "Black Wide-Leg Trousers", color: "#1a1a1a", type: "Trousers" },
+    { id: "b2", name: "Taupe/Olive Joggers", color: "#7a7060", type: "Joggers" },
+    { id: "b3", name: "Grey Sweatpants", color: "#b0b0b0", type: "Sweatpants" },
+    { id: "b4", name: "Adidas Black Training Pants", color: "#1a1a1a", type: "Athletic" },
+    { id: "b5", name: "White/Cream Chino Shorts", color: "#f0ead8", type: "Shorts" },
+    { id: "b6", name: "White Drawstring Shorts", color: "#f5f5f5", type: "Shorts" },
+    { id: "b7", name: "Tan/Khaki Drawstring Shorts", color: "#c8a878", type: "Shorts" },
+    { id: "b8", name: "J.Crew Grey Chino Shorts", color: "#a0a8a0", type: "Shorts" },
+    { id: "b9", name: "Dark Charcoal Chino Shorts", color: "#4a4a4a", type: "Shorts" },
+    { id: "b10", name: "Cream Cargo Shorts", color: "#e8dcc8", type: "Shorts" },
+    { id: "b11", name: "Light Khaki Cargo Shorts", color: "#c8b890", type: "Shorts" },
+    { id: "b12", name: "Ralph Lauren Khaki Chinos", color: "#c8b078", type: "Chinos" },
+    { id: "b13", name: "Goodfellow Black Slim Jeans", color: "#1a1a2a", type: "Jeans" },
+    { id: "b14", name: "A&F Light Wash Jeans (straight)", color: "#a0b8d0", type: "Jeans" },
+    { id: "b15", name: "A&F Medium/Dark Wash Straight Jeans", color: "#3a5a80", type: "Jeans" },
+    { id: "b16", name: "A&F Light Wash Slim Jeans", color: "#b0c8e0", type: "Jeans" },
+    { id: "b17", name: "J.Crew Grey Slim Chinos", color: "#9a9a9a", type: "Chinos" },
+    { id: "b18", name: "Light Sage Elastic Waist Chinos", color: "#b8c8b8", type: "Chinos" },
+    { id: "b19", name: "Cream Linen Trousers", color: "#e8e0d0", type: "Trousers" },
+    { id: "b20", name: "A&F Grey Linen Trousers", color: "#c0b8b0", type: "Trousers" },
+    { id: "b21", name: "Navy Drawstring Jogger Trousers", color: "#1e2d5a", type: "Joggers" },
+    { id: "b22", name: "Gap Khaki Slim Chinos", color: "#c0a870", type: "Chinos" },
+  ],
+};
+
+const OUTFIT_SUGGESTIONS = [
+  { name: "Clean Monochrome", top: "t5", bottom: "b1", layer: null, occasion: "Evening", desc: "All-black sleek look. Wide-leg trouser elevates it.", temp: "cold" },
+  { name: "Spring Fresh", top: "t13", bottom: "b12", layer: null, occasion: "Casual", desc: "Powder blue tee + khaki chinos = classic spring.", temp: "warm" },
+  { name: "Earth Tones", top: "t17", bottom: "b2", layer: null, occasion: "Casual", desc: "Washed olive tee + taupe joggers. Tonal and intentional.", temp: "mild" },
+  { name: "Preppy Office", top: "m5", bottom: "b12", layer: null, occasion: "Smart Casual", desc: "Polo RL cream quarter-zip + khaki chinos. Polished.", temp: "cold" },
+  { name: "Linen Casual", top: "s2", bottom: "b15", layer: null, occasion: "Smart Casual", desc: "Navy linen button-down open over dark jeans.", temp: "warm" },
+  { name: "Golf Ready", top: "p1", bottom: "b22", layer: null, occasion: "Golf", desc: "Masters mint polo + khaki chinos. Augusta energy.", temp: "warm" },
+  { name: "Night Out", top: "t5", bottom: "b13", layer: "o1", occasion: "Evening", desc: "Black tee + slim jeans + A&F jacket. Best going-out look.", temp: "cold" },
+  { name: "Coastal Casual", top: "t12", bottom: "b16", layer: null, occasion: "Casual", desc: "ATO blue tee + light wash jeans. Easy and fresh.", temp: "mild" },
+  { name: "Coral Pop", top: "t15", bottom: "b17", layer: null, occasion: "Casual", desc: "Vineyard Vines coral tee + grey chinos. Bold but clean.", temp: "warm" },
+  { name: "Layered Shacket", top: "t8", bottom: "b2", layer: "s3", occasion: "Transitional", desc: "Marine Layer shacket over white tee + olive joggers.", temp: "mild" },
+  { name: "Quiet Luxury", top: "m1", bottom: "b15", layer: null, occasion: "Smart Casual", desc: "AllSaints merino + dark wash jeans. Premium feel.", temp: "cold" },
+  { name: "Ryder Cup Shorts", top: "p4", bottom: "b8", layer: null, occasion: "Golf", desc: "Ryder Cup navy polo + grey chino shorts.", temp: "warm" },
+  { name: "Vissla Vibe", top: "t8", bottom: "b14", layer: "s4", occasion: "Transitional", desc: "Vissla shacket + white tee + light wash jeans.", temp: "mild" },
+  { name: "Burgundy Boss", top: "p6", bottom: "b12", layer: null, occasion: "Golf/Smart", desc: "Peter Millar burgundy polo + khaki chinos. Rich.", temp: "mild" },
+  { name: "Summer Linen", top: "t10", bottom: "b19", layer: null, occasion: "Smart Casual", desc: "White tee + cream linen trousers. Effortless.", temp: "warm" },
+  { name: "Merino + Dark Jeans", top: "m1", bottom: "b13", layer: null, occasion: "Smart Casual", desc: "AllSaints merino crewneck + black slim jeans. Quiet luxury.", temp: "cold" },
+  { name: "Olive + Khaki", top: "t6", bottom: "b22", layer: null, occasion: "Casual", desc: "Dark olive tee + khaki chinos. Clean earth palette.", temp: "mild" },
+  { name: "Polo + Linen", top: "p2", bottom: "b19", layer: null, occasion: "Smart Casual", desc: "TravisMathew stripe polo + cream linen trousers. Elevated.", temp: "warm" },
+  { name: "Cozy Cream", top: "m2", bottom: "b12", layer: null, occasion: "Casual", desc: "Lands' End ribbed knit + khaki chinos. Soft and warm.", temp: "cold" },
+  { name: "Vest Layer", top: "t13", bottom: "b15", layer: "o3", occasion: "Transitional", desc: "Powder blue tee + navy quilted vest + dark jeans.", temp: "mild" },
+  { name: "Snap Pullover Day", top: "m6", bottom: "b17", layer: null, occasion: "Casual", desc: "Oatmeal snap pullover + grey slim chinos. Effortless.", temp: "cold" },
+  { name: "RVCA Fresh", top: "t9", bottom: "b14", layer: null, occasion: "Casual", desc: "Teal RVCA tee + light wash jeans. Clean and cool.", temp: "warm" },
+  { name: "Splatter Golf", top: "p3", bottom: "b22", layer: null, occasion: "Golf", desc: "Breezy splatter polo + khaki slim chinos. Fun on the course.", temp: "warm" },
+  { name: "Black Linen Evening", top: "s1", bottom: "b13", layer: null, occasion: "Evening", desc: "Black linen button-down + black slim jeans. Sleek.", temp: "mild" },
+];
+
+const SHOP_PICKS = [
+  { category: "Tops", items: [
+    { name: "Vuori Strato Tech Tee", brand: "Vuori", price: "$68", why: "Your performance tees are all dark — a heather sage or stone Vuori adds premium athletic feel in a fresh color.", link: "https://vuoriclothing.com" },
+    { name: "Alex Mill Garment-Dyed Tee", brand: "Alex Mill", price: "$55", why: "A faded burgundy or forest green slots into your earth-tone palette and stands apart from your navy-heavy tops.", link: "https://alexmill.com" },
+    { name: "Sunspel Riviera Polo", brand: "Sunspel", price: "$145", why: "You have great golf polos but no understated luxury polo. Sunspel in white or pale blue elevates casual days significantly.", link: "https://sunspel.com" },
+  ]},
+  { category: "Layering", items: [
+    { name: "Patagonia Better Sweater Fleece", brand: "Patagonia", price: "$139", why: "You're missing a zip-up fleece that works outdoors and casually. The Better Sweater in dark walnut fills that gap.", link: "https://patagonia.com" },
+    { name: "Todd Snyder Shawl Collar Cardigan", brand: "Todd Snyder", price: "$198", why: "A chunky shawl-collar cardigan in oatmeal or camel adds a relaxed smart-casual layer you don't currently have.", link: "https://toddsnyder.com" },
+    { name: "Mack Weldon Ace Sweatshirt", brand: "Mack Weldon", price: "$98", why: "A clean, logo-free pullover in warm brown or rust complements your navy-heavy midlayer collection.", link: "https://mackweldon.com" },
+  ]},
+  { category: "Bottoms", items: [
+    { name: "Vuori Ripstop Climber Pant", brand: "Vuori", price: "$128", why: "You have joggers and chinos but no technical trouser. These in dark cacao or slate are incredibly versatile.", link: "https://vuoriclothing.com" },
+    { name: "Buck Mason Slim Straight Jean", brand: "Buck Mason", price: "$148", why: "A true mid-wash indigo slim jean sits between your light and dark washes — a gap in your denim range.", link: "https://buckmason.com" },
+    { name: "Banana Republic Slim Chino in Olive", brand: "Banana Republic", price: "$79", why: "You have khaki/grey/black bottoms but no green trouser. An olive chino rounds out your palette.", link: "https://bananarepublic.com" },
+  ]},
+  { category: "Shoes", items: [
+    { name: "New Balance 574 in Grey/Tan", brand: "New Balance", price: "$100", why: "A classic retro sneaker in neutral tones complements your clean aesthetic better than a stark white trainer.", link: "https://newbalance.com" },
+    { name: "Vans Authentic in Black Canvas", brand: "Vans", price: "$65", why: "A low-profile black canvas sneaker gives a cleaner casual option for shorts-and-tee combos.", link: "https://vans.com" },
+    { name: "Cole Haan Pinch Tassel Loafer", brand: "Cole Haan", price: "$160", why: "You have no dress shoe or loafer — a tan suede loafer unlocks smart-casual looks you can't currently build.", link: "https://colehaan.com" },
+  ]},
+  { category: "Accessories", items: [
+    { name: "Saturdays NYC Minimal Baseball Cap", brand: "Saturdays NYC", price: "$45", why: "A clean cap in tan or stone adds the finishing touch to casual outfits without competing with graphic tees.", link: "https://saturdaysnyc.com" },
+    { name: "Fossil Minimalist Leather Watch", brand: "Fossil", price: "$115", why: "A slim leather-strap watch in cognac or black adds polish to any outfit — the one accessory that lifts everything.", link: "https://fossil.com" },
+    { name: "Herschel Little America Backpack", brand: "Herschel", price: "$90", why: "A clean canvas backpack in tan or black ties your casual aesthetic together and fills a daily carry gap.", link: "https://herschel.com" },
+  ]},
+];
+
+const categoryLabels = { tops: "T-Shirts & Long Sleeves", polos: "Polos", midlayers: "Sweaters & Hoodies", shirts: "Shirts & Shackets", outerwear: "Outerwear", bottoms: "Bottoms" };
+const occasionColors = { Casual: "#4a9b7a", Evening: "#7a4a9b", "Smart Casual": "#2a7ab0", Golf: "#7a9b2a", Transitional: "#b07a2a", "Golf/Smart": "#5a8a3a" };
+
+const CATEGORY_OPTIONS = ["tops", "polos", "midlayers", "shirts", "outerwear", "bottoms"];
+const TYPE_OPTIONS = {
+  tops: ["T-Shirt", "Long Sleeve", "Graphic Tee"],
+  polos: ["Polo"],
+  midlayers: ["Sweater", "Hoodie", "Quarter-Zip", "Sweatshirt", "Pullover"],
+  shirts: ["Button-Down", "Shacket", "Flannel"],
+  outerwear: ["Jacket", "Vest", "Coat"],
+  bottoms: ["Jeans", "Chinos", "Shorts", "Trousers", "Joggers", "Sweatpants", "Athletic"],
+};
+
+function getWeatherEmoji(c) {
+  if (!c) return "🌤";
+  const s = c.toLowerCase();
+  if (s.includes("clear")) return "☀️";
+  if (s.includes("partly")) return "⛅";
+  if (s.includes("cloud")) return "☁️";
+  if (s.includes("rain") || s.includes("shower") || s.includes("drizzle")) return "🌧️";
+  if (s.includes("snow")) return "❄️";
+  if (s.includes("storm") || s.includes("thunder")) return "⛈️";
+  if (s.includes("fog") || s.includes("mist")) return "🌫️";
+  return "🌤";
+}
+function getTempCategory(h) { return h >= 75 ? "warm" : h >= 58 ? "mild" : "cold"; }
+function getTempLabel(c) { return c === "warm" ? "Warm — tees & shorts weather" : c === "mild" ? "Mild — light layer ideal" : "Cool — sweater or hoodie recommended"; }
+function getWeatherAdvice(h, r) {
+  const tips = [];
+  const c = getTempCategory(h);
+  if (c === "warm") tips.push("Light tees, polos, and shorts are perfect.");
+  else if (c === "mild") tips.push("A light layer or long sleeve is ideal.");
+  else tips.push("Layer up — sweater or hoodie recommended.");
+  if (r >= 40) tips.push("Rain likely — avoid linen, stick to darker colors.");
+  else if (r >= 20) tips.push("Small rain chance — nothing to worry about.");
+  else tips.push("No rain expected — dress freely.");
+  return tips;
+}
+
+export default function WardrobeTracker() {
+  const [dirty, setDirty] = useState({});
+  const [customItems, setCustomItems] = useState({});
+  const [activeCategory, setActiveCategory] = useState("tops");
+  const [activeTab, setActiveTab] = useState("today");
+  const [filterOccasion, setFilterOccasion] = useState("All");
+  const [log, setLog] = useState([]);
+  const [toast, setToast] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [shopCategory, setShopCategory] = useState("Tops");
+
+  // Add clothes state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedResult, setSelectedResult] = useState(null);
+  const [addForm, setAddForm] = useState({ name: "", brand: "", color: "#888888", category: "tops", type: "T-Shirt", price: "" });
+  const [addSuccess, setAddSuccess] = useState(false);
+  const searchRef = useRef(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const d = await window.storage.get("dirty-items");
+        if (d) setDirty(JSON.parse(d.value));
+        const l = await window.storage.get("wear-log");
+        if (l) setLog(JSON.parse(l.value));
+        const c = await window.storage.get("custom-items");
+        if (c) setCustomItems(JSON.parse(c.value));
+      } catch (e) {}
+    };
+    load();
+    fetchWeather();
+  }, []);
+
+  const fetchWeather = async () => {
+    setWeatherLoading(true);
+    try {
+      const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=40.0359&longitude=-75.3524&daily=temperature_2m_max,precipitation_probability_max,weathercode&temperature_unit=fahrenheit&forecast_days=3&timezone=America%2FNew_York");
+      const data = await res.json();
+      const cm = (code) => { if (code===0) return "Clear sky"; if (code<=3) return "Partly cloudy"; if (code<=49) return "Foggy"; if (code<=59) return "Drizzle"; if (code<=69) return "Rain"; if (code<=79) return "Snow"; if (code<=82) return "Rain showers"; if (code<=99) return "Thunderstorm"; return "Cloudy"; };
+      setWeather({ high: Math.round(data.daily.temperature_2m_max[0]), rainChance: data.daily.precipitation_probability_max[0], condition: cm(data.daily.weathercode[0]) });
+    } catch (e) { setWeather({ high: 72, rainChance: 10, condition: "Partly cloudy" }); }
+    setWeatherLoading(false);
+  };
+
+  const saveDirty = async (nd) => { setDirty(nd); try { await window.storage.set("dirty-items", JSON.stringify(nd)); } catch(e) {} };
+  const saveLog = async (nl) => { setLog(nl); try { await window.storage.set("wear-log", JSON.stringify(nl)); } catch(e) {} };
+  const saveCustom = async (nc) => { setCustomItems(nc); try { await window.storage.set("custom-items", JSON.stringify(nc)); } catch(e) {} };
+
+  const toggleDirty = (id) => { const nd = {...dirty,[id]:!dirty[id]}; saveDirty(nd); showToast(nd[id]?"Marked as dirty 🧺":"Marked as clean ✓"); };
+  const markWorn = (name, ids) => { const nd={...dirty}; ids.forEach(id=>{if(id)nd[id]=true;}); saveDirty(nd); const e={date:new Date().toLocaleDateString(),outfit:name,items:ids}; saveLog([e,...log].slice(0,20)); showToast(`Logged "${name}" as worn 👕`); };
+  const washAll = () => { saveDirty({}); showToast("All items marked clean! 🌟"); };
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null),2500); };
+
+  // Merge base + custom wardrobe
+  const WARDROBE = Object.fromEntries(
+    Object.keys(BASE_WARDROBE).map(cat => [
+      cat,
+      [...BASE_WARDROBE[cat], ...(customItems[cat] || [])]
+    ])
+  );
+
+  const allItems = Object.values(WARDROBE).flat();
+  const getItem = (id) => allItems.find(i => i.id === id);
+  const isClean = (id) => !dirty[id];
+
+  const cleanOutfits = OUTFIT_SUGGESTIONS.filter(o => [o.top,o.bottom,o.layer].filter(Boolean).every(id=>isClean(id)));
+  const filteredOutfits = filterOccasion==="All" ? cleanOutfits : cleanOutfits.filter(o=>o.occasion===filterOccasion);
+  const todayOutfits = weather ? cleanOutfits.filter(o=>o.temp===getTempCategory(weather.high)) : [];
+  const dirtyCount = Object.values(dirty).filter(Boolean).length;
+  const occasions = ["All", ...new Set(OUTFIT_SUGGESTIONS.map(o=>o.occasion))];
+
+  // AI search for clothing items
+  const searchItems = async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setSearchResults([]);
+    setSelectedResult(null);
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: `You are a clothing search assistant. The user is searching for: "${searchQuery}"
+
+Return ONLY a valid JSON array (no markdown, no explanation) with 4-6 clothing item results that match this search. Each item should be a real product or realistic variation from a known brand.
+
+Format:
+[
+  {
+    "name": "Full product name with color/style",
+    "brand": "Brand name",
+    "price": "$XX",
+    "color": "#hexcode (approximate color of the item)",
+    "category": "tops|polos|midlayers|shirts|outerwear|bottoms",
+    "type": "T-Shirt|Long Sleeve|Polo|Hoodie|Quarter-Zip|Sweater|Sweatshirt|Button-Down|Shacket|Jacket|Vest|Jeans|Chinos|Shorts|Trousers|Joggers|Pullover|Athletic",
+    "description": "One sentence about this item",
+    "store": "Where to buy (e.g. abercrombie.com, nordstrom.com, etc.)"
+  }
+]
+
+Be accurate with brands, realistic with prices, and use a hex color that closely matches the item's actual color. Vary the results with different colors/styles if relevant.`
+          }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content?.[0]?.text || "[]";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const results = JSON.parse(clean);
+      setSearchResults(results);
+    } catch (e) {
+      setSearchResults([]);
+      showToast("Search failed — try again");
+    }
+    setSearching(false);
+  };
+
+  const selectResult = (item) => {
+    setSelectedResult(item);
+    setAddForm({
+      name: item.name,
+      brand: item.brand,
+      color: item.color || "#888888",
+      category: item.category || "tops",
+      type: item.type || "T-Shirt",
+      price: item.price || "",
+      store: item.store || "",
+    });
+  };
+
+  const addToWardrobe = () => {
+    const newId = `custom_${Date.now()}`;
+    const newItem = {
+      id: newId,
+      name: addForm.brand ? `${addForm.brand} ${addForm.name}` : addForm.name,
+      color: addForm.color,
+      type: addForm.type,
+      price: addForm.price,
+      store: addForm.store,
+      custom: true,
+    };
+    const cat = addForm.category;
+    const updated = { ...customItems, [cat]: [...(customItems[cat] || []), newItem] };
+    saveCustom(updated);
+    setAddSuccess(true);
+    setSearchQuery("");
+    setSearchResults([]);
+    setSelectedResult(null);
+    setAddForm({ name: "", brand: "", color: "#888888", category: "tops", type: "T-Shirt", price: "" });
+    showToast(`Added "${newItem.name}" to your wardrobe! 🎉`);
+    setTimeout(() => setAddSuccess(false), 3000);
+  };
+
+  const removeCustomItem = (cat, id) => {
+    const updated = { ...customItems, [cat]: (customItems[cat] || []).filter(i => i.id !== id) };
+    saveCustom(updated);
+    showToast("Item removed from wardrobe");
+  };
+
+  const tabs = [
+    ["today","Today ☀"],
+    ["wardrobe","Wardrobe"],
+    ["outfits","Outfits"],
+    ["log","Log"],
+    ["add","+ Add"],
+    ["shop","Shop ✦"],
+  ];
+
+  const OutfitCard = ({ outfit }) => {
+    const ti=getItem(outfit.top), bi=getItem(outfit.bottom), li=outfit.layer?getItem(outfit.layer):null;
+    return (
+      <div style={{background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:10,padding:"16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+          <div>
+            <div style={{fontSize:15,color:"#e8e0d0",marginBottom:4}}>{outfit.name}</div>
+            <div style={{fontSize:11,color:"#777"}}>{outfit.desc}</div>
+          </div>
+          <span style={{background:occasionColors[outfit.occasion]||"#555",color:"white",borderRadius:12,padding:"3px 10px",fontSize:9,letterSpacing:2,whiteSpace:"nowrap",marginLeft:8}}>{outfit.occasion.toUpperCase()}</span>
+        </div>
+        <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+          {[ti,bi,li].filter(Boolean).map((item,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:6,background:"#252525",borderRadius:6,padding:"6px 10px"}}>
+              <div style={{width:16,height:16,borderRadius:3,background:item.color,border:"1px solid rgba(255,255,255,0.1)"}}/>
+              <span style={{fontSize:10,color:"#aaa"}}>{item.name}</span>
+            </div>
+          ))}
+        </div>
+        <button onClick={()=>markWorn(outfit.name,[outfit.top,outfit.bottom,outfit.layer].filter(Boolean))}
+          style={{width:"100%",padding:"8px",background:"#252525",color:"#aaa",border:"1px solid #333",borderRadius:6,cursor:"pointer",fontSize:11,letterSpacing:2,fontFamily:"Georgia, serif"}}
+          onMouseEnter={e=>{e.target.style.background="#3a3a3a";e.target.style.color="#e8e0d0";}}
+          onMouseLeave={e=>{e.target.style.background="#252525";e.target.style.color="#aaa";}}>
+          MARK AS WORN → DIRTY
+        </button>
+      </div>
+    );
+  };
+
+  const inp = (style={}) => ({
+    width:"100%", padding:"10px 14px", background:"#1a1a1a",
+    color:"#e8e0d0", border:"1px solid #333", borderRadius:8,
+    fontSize:13, fontFamily:"Georgia, serif", boxSizing:"border-box",
+    outline:"none", ...style
+  });
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div style={{minHeight:"100vh",background:"#0f0f0f",fontFamily:"'Georgia', serif",color:"#e8e0d0"}}>
+      {/* Header */}
+      <div style={{background:"linear-gradient(135deg,#1a1a1a 0%,#252525 100%)",borderBottom:"1px solid #2a2a2a",padding:"20px 24px 0"}}>
+        <div style={{maxWidth:800,margin:"0 auto"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div>
+              <div style={{fontSize:22,fontWeight:"bold",letterSpacing:3,color:"#e8e0d0"}}>WARDROBE</div>
+              <div style={{fontSize:10,color:"#555",letterSpacing:3}}>RADNOR, PA</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:28,fontWeight:"bold",color:dirtyCount>0?"#e07050":"#5aaa7a"}}>{dirtyCount}</div>
+              <div style={{fontSize:10,color:"#666",letterSpacing:2}}>DIRTY</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:0,overflowX:"auto"}}>
+            {tabs.map(([key,label])=>(
+              <button key={key} onClick={()=>setActiveTab(key)} style={{
+                padding:"10px 14px",
+                background:activeTab===key?"#e8e0d0":"transparent",
+                color:activeTab===key?"#0f0f0f":key==="shop"?"#c8a04a":key==="add"?"#5aaa7a":"#777",
+                border:"none",cursor:"pointer",fontSize:10,letterSpacing:2,
+                textTransform:"uppercase",fontFamily:"Georgia, serif",
+                borderRadius:"4px 4px 0 0",transition:"all 0.2s",whiteSpace:"nowrap",
+              }}>{label}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:800,margin:"0 auto",padding:"24px 16px"}}>
+
+        {/* TODAY */}
+        {activeTab==="today" && (
+          <div>
+            {weatherLoading ? (
+              <div style={{textAlign:"center",padding:"60px",color:"#555"}}>
+                <div style={{fontSize:32,marginBottom:12}}>🌤</div><div>Loading weather...</div>
+              </div>
+            ) : weather ? (
+              <>
+                <div style={{background:"linear-gradient(135deg,#0f1e30 0%,#1a2a3a 60%,#0f1820 100%)",border:"1px solid #1a3a50",borderRadius:16,padding:"28px",marginBottom:28,position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,right:0,fontSize:120,opacity:0.07,lineHeight:1}}>{getWeatherEmoji(weather.condition)}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",position:"relative"}}>
+                    <div>
+                      <div style={{fontSize:52}}>{getWeatherEmoji(weather.condition)}</div>
+                      <div style={{fontSize:14,color:"#7ab0cc",marginTop:10,letterSpacing:2,textTransform:"uppercase"}}>{weather.condition}</div>
+                      <div style={{fontSize:11,color:"#3a6a80",marginTop:4}}>{new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:60,fontWeight:"bold",color:"#e8e0d0",lineHeight:1}}>{weather.high}°</div>
+                      <div style={{fontSize:10,color:"#3a6070",letterSpacing:3}}>HIGH °F</div>
+                      <div style={{marginTop:10,display:"inline-block",background:weather.rainChance>=40?"rgba(60,100,160,0.3)":"rgba(40,120,80,0.2)",border:`1px solid ${weather.rainChance>=40?"#3a6090":"#2a7050"}`,borderRadius:20,padding:"5px 14px"}}>
+                        <span style={{fontSize:11,color:weather.rainChance>=40?"#7ab0e0":"#5aaa7a"}}>💧 {weather.rainChance}% rain</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{marginTop:20,paddingTop:16,borderTop:"1px solid rgba(100,160,200,0.1)"}}>
+                    <div style={{fontSize:10,color:"#3a6a80",letterSpacing:2,marginBottom:8}}>STYLE NOTES</div>
+                    {getWeatherAdvice(weather.high,weather.rainChance).map((tip,i)=>(
+                      <div key={i} style={{fontSize:12,color:"#7aaabb",marginBottom:5,display:"flex",alignItems:"flex-start",gap:8}}>
+                        <span style={{color:"#3a8a6a",flexShrink:0}}>→</span>{tip}
+                      </div>
+                    ))}
+                    <div style={{marginTop:12,fontSize:11,color:"#3a6a80",fontStyle:"italic"}}>{getTempLabel(getTempCategory(weather.high))}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                  <div style={{fontSize:11,color:"#888",letterSpacing:2}}>OUTFITS FOR TODAY · {todayOutfits.length} AVAILABLE</div>
+                  <div style={{fontSize:10,color:"#444"}}>CLEAN CLOTHES ONLY</div>
+                </div>
+                {todayOutfits.length===0 ? (
+                  <div style={{textAlign:"center",padding:"50px 20px",color:"#444"}}>
+                    <div style={{fontSize:40,marginBottom:12}}>🧺</div>
+                    <div style={{fontSize:14,color:"#555"}}>No weather-matched clean outfits right now.</div>
+                  </div>
+                ) : (
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    {todayOutfits.slice(0,8).map(o=><OutfitCard key={o.name} outfit={o}/>)}
+                  </div>
+                )}
+              </>
+            ) : null}
+          </div>
+        )}
+
+        {/* WARDROBE */}
+        {activeTab==="wardrobe" && (
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontSize:11,color:"#888",letterSpacing:2}}>TAP TO MARK DIRTY / CLEAN</div>
+              <button onClick={washAll} style={{padding:"8px 16px",background:"#1a3a2a",color:"#5aaa7a",border:"1px solid #2a6a3a",borderRadius:4,cursor:"pointer",fontSize:11,letterSpacing:2,fontFamily:"Georgia, serif"}}>WASH ALL ✓</button>
+            </div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:20}}>
+              {Object.entries(categoryLabels).map(([key,label])=>{
+                const items=WARDROBE[key]; const dc=items.filter(i=>dirty[i.id]).length;
+                return (
+                  <button key={key} onClick={()=>setActiveCategory(key)} style={{padding:"6px 14px",background:activeCategory===key?"#e8e0d0":"#1a1a1a",color:activeCategory===key?"#0f0f0f":"#777",border:`1px solid ${activeCategory===key?"#e8e0d0":"#2a2a2a"}`,borderRadius:20,cursor:"pointer",fontSize:11,fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:6}}>
+                    {label}{dc>0&&<span style={{background:"#e07050",color:"white",borderRadius:10,padding:"1px 6px",fontSize:9}}>{dc}</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              {WARDROBE[activeCategory].map(item=>{
+                const isDirty=dirty[item.id];
+                return (
+                  <div key={item.id} style={{background:isDirty?"#1f1510":"#1a1a1a",border:`1px solid ${isDirty?"#5a3020":"#252525"}`,borderRadius:8,padding:"12px 14px",cursor:"pointer",display:"flex",alignItems:"center",gap:12,transition:"all 0.15s",opacity:isDirty?0.65:1,position:"relative"}}
+                    onClick={()=>toggleDirty(item.id)}>
+                    <div style={{width:32,height:32,borderRadius:6,background:item.color,border:"1px solid rgba(255,255,255,0.08)",flexShrink:0}}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,color:isDirty?"#885540":"#e8e0d0",lineHeight:1.3}}>{item.name}</div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginTop:2}}>{item.type}{item.custom&&<span style={{color:"#5aaa7a",marginLeft:6}}>NEW</span>}</div>
+                    </div>
+                    <div style={{fontSize:16}}>{isDirty?"🧺":"✓"}</div>
+                    {item.custom && (
+                      <div onClick={e=>{e.stopPropagation();removeCustomItem(activeCategory,item.id);}} style={{position:"absolute",top:6,right:36,fontSize:10,color:"#555",cursor:"pointer",padding:"2px 4px"}} title="Remove">✕</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* OUTFITS */}
+        {activeTab==="outfits" && (
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20,flexWrap:"wrap",gap:10}}>
+              <div style={{fontSize:11,color:"#888",letterSpacing:2}}>{filteredOutfits.length} CLEAN OUTFIT{filteredOutfits.length!==1?"S":""}</div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {occasions.map(occ=>(
+                  <button key={occ} onClick={()=>setFilterOccasion(occ)} style={{padding:"5px 12px",background:filterOccasion===occ?(occasionColors[occ]||"#555"):"#1a1a1a",color:filterOccasion===occ?"white":"#777",border:`1px solid ${filterOccasion===occ?(occasionColors[occ]||"#555"):"#2a2a2a"}`,borderRadius:20,cursor:"pointer",fontSize:10,letterSpacing:1,fontFamily:"Georgia, serif"}}>{occ}</button>
+                ))}
+              </div>
+            </div>
+            {filteredOutfits.length===0 ? (
+              <div style={{textAlign:"center",padding:"60px 20px",color:"#444"}}>
+                <div style={{fontSize:40,marginBottom:12}}>🧺</div>
+                <div style={{fontSize:14,color:"#555"}}>No clean outfits for this filter.</div>
+              </div>
+            ) : (
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                {filteredOutfits.map(o=><OutfitCard key={o.name} outfit={o}/>)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LOG */}
+        {activeTab==="log" && (
+          <div>
+            <div style={{fontSize:11,color:"#888",letterSpacing:2,marginBottom:20}}>RECENT WEAR HISTORY</div>
+            {log.length===0 ? (
+              <div style={{textAlign:"center",padding:"60px 20px",color:"#444"}}>
+                <div style={{fontSize:40,marginBottom:12}}>📋</div>
+                <div style={{fontSize:14,color:"#555"}}>No outfits logged yet.</div>
+              </div>
+            ) : (
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                {log.map((entry,i)=>(
+                  <div key={i} style={{background:"#1a1a1a",border:"1px solid #252525",borderRadius:8,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div>
+                      <div style={{fontSize:14,color:"#e8e0d0"}}>{entry.outfit}</div>
+                      <div style={{fontSize:11,color:"#555",marginTop:4}}>{entry.items.length} items marked dirty</div>
+                    </div>
+                    <div style={{fontSize:11,color:"#555"}}>{entry.date}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ADD CLOTHES */}
+        {activeTab==="add" && (
+          <div>
+            <div style={{marginBottom:24}}>
+              <div style={{fontSize:15,color:"#5aaa7a",letterSpacing:2,marginBottom:6}}>+ ADD NEW CLOTHES</div>
+              <div style={{fontSize:12,color:"#555",lineHeight:1.7}}>Search for any item from any store — the AI will find it and fill in all the details. Then add it to your wardrobe instantly.</div>
+            </div>
+
+            {/* Search bar */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:10,color:"#666",letterSpacing:2,marginBottom:8}}>SEARCH FOR AN ITEM</div>
+              <div style={{display:"flex",gap:10}}>
+                <input
+                  ref={searchRef}
+                  value={searchQuery}
+                  onChange={e=>setSearchQuery(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&searchItems()}
+                  placeholder='e.g. "Peter Millar navy polo" or "Vuori joggers olive"'
+                  style={{...inp(),flex:1,borderColor:"#3a3a3a"}}
+                />
+                <button onClick={searchItems} disabled={searching||!searchQuery.trim()} style={{padding:"10px 20px",background:searching?"#252525":"#5aaa7a",color:searching?"#555":"#0f0f0f",border:"none",borderRadius:8,cursor:searching?"not-allowed":"pointer",fontSize:11,letterSpacing:2,fontFamily:"Georgia, serif",whiteSpace:"nowrap",fontWeight:"bold",transition:"all 0.2s"}}>
+                  {searching?"SEARCHING...":"SEARCH"}
+                </button>
+              </div>
+
+              {/* Quick store buttons */}
+              <div style={{marginTop:12,display:"flex",gap:8,flexWrap:"wrap"}}>
+                <div style={{fontSize:10,color:"#444",letterSpacing:1,alignSelf:"center"}}>QUICK:</div>
+                {["Abercrombie","Peter Millar","Vuori","Patagonia","TravisMathew","Polo Ralph Lauren","Marine Layer","Vineyard Vines"].map(store=>(
+                  <button key={store} onClick={()=>{setSearchQuery(store+" "); searchRef.current?.focus();}} style={{padding:"4px 10px",background:"#1a1a1a",color:"#666",border:"1px solid #2a2a2a",borderRadius:20,cursor:"pointer",fontSize:10,fontFamily:"Georgia, serif"}}>
+                    {store}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search results */}
+            {searching && (
+              <div style={{textAlign:"center",padding:"40px",color:"#555"}}>
+                <div style={{fontSize:28,marginBottom:12,animation:"spin 1s linear infinite",display:"inline-block"}}>⟳</div>
+                <div style={{fontSize:12}}>Searching across stores...</div>
+              </div>
+            )}
+
+            {searchResults.length>0 && !selectedResult && (
+              <div>
+                <div style={{fontSize:10,color:"#666",letterSpacing:2,marginBottom:12}}>SELECT AN ITEM TO ADD</div>
+                <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+                  {searchResults.map((item,i)=>(
+                    <div key={i} onClick={()=>selectResult(item)} style={{background:"#1a1a1a",border:"1px solid #2a2a2a",borderRadius:10,padding:"14px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,transition:"all 0.15s"}}
+                      onMouseEnter={e=>e.currentTarget.style.border="1px solid #5aaa7a"}
+                      onMouseLeave={e=>e.currentTarget.style.border="1px solid #2a2a2a"}>
+                      <div style={{width:44,height:44,borderRadius:8,background:item.color||"#888",border:"1px solid rgba(255,255,255,0.1)",flexShrink:0}}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:14,color:"#e8e0d0",marginBottom:3}}>{item.name}</div>
+                        <div style={{fontSize:11,color:"#5aaa7a",marginBottom:3}}>{item.brand} · {item.price}</div>
+                        <div style={{fontSize:11,color:"#555"}}>{item.description}</div>
+                      </div>
+                      <div style={{fontSize:10,color:"#444",textAlign:"right",flexShrink:0}}>
+                        <div style={{color:"#666"}}>{item.type}</div>
+                        <div style={{marginTop:4,color:"#3a6a50"}}>{item.store}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add form */}
+            {selectedResult && (
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                  <button onClick={()=>{setSelectedResult(null);}} style={{background:"transparent",border:"none",color:"#555",cursor:"pointer",fontSize:12,fontFamily:"Georgia, serif",letterSpacing:1}}>← BACK</button>
+                  <div style={{fontSize:10,color:"#666",letterSpacing:2}}>CONFIRM & ADD TO WARDROBE</div>
+                </div>
+
+                <div style={{background:"#1a1a1a",border:"1px solid #2a4a3a",borderRadius:12,padding:"20px",marginBottom:20}}>
+                  <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
+                    <div style={{width:56,height:56,borderRadius:10,background:addForm.color,border:"1px solid rgba(255,255,255,0.1)",flexShrink:0}}/>
+                    <div>
+                      <div style={{fontSize:15,color:"#e8e0d0",marginBottom:4}}>{addForm.name}</div>
+                      <div style={{fontSize:11,color:"#5aaa7a"}}>{addForm.brand} · {addForm.price}</div>
+                    </div>
+                  </div>
+
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>ITEM NAME</div>
+                      <input value={addForm.name} onChange={e=>setAddForm({...addForm,name:e.target.value})} style={inp({fontSize:12})}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>BRAND</div>
+                      <input value={addForm.brand} onChange={e=>setAddForm({...addForm,brand:e.target.value})} style={inp({fontSize:12})}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>CATEGORY</div>
+                      <select value={addForm.category} onChange={e=>setAddForm({...addForm,category:e.target.value,type:TYPE_OPTIONS[e.target.value][0]})} style={inp({fontSize:12})}>
+                        {CATEGORY_OPTIONS.map(c=><option key={c} value={c}>{categoryLabels[c]}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>TYPE</div>
+                      <select value={addForm.type} onChange={e=>setAddForm({...addForm,type:e.target.value})} style={inp({fontSize:12})}>
+                        {(TYPE_OPTIONS[addForm.category]||[]).map(t=><option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>COLOR (hex)</div>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <input type="color" value={addForm.color} onChange={e=>setAddForm({...addForm,color:e.target.value})} style={{width:44,height:38,border:"1px solid #333",borderRadius:6,background:"#1a1a1a",cursor:"pointer",padding:2}}/>
+                        <input value={addForm.color} onChange={e=>setAddForm({...addForm,color:e.target.value})} style={{...inp({fontSize:12}),flex:1}}/>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>PRICE</div>
+                      <input value={addForm.price} onChange={e=>setAddForm({...addForm,price:e.target.value})} style={inp({fontSize:12})} placeholder="$0"/>
+                    </div>
+                  </div>
+                </div>
+
+                <button onClick={addToWardrobe} style={{width:"100%",padding:"14px",background:"#2a5a3a",color:"#5aaa7a",border:"1px solid #3a7a4a",borderRadius:10,cursor:"pointer",fontSize:12,letterSpacing:3,fontFamily:"Georgia, serif",fontWeight:"bold",transition:"all 0.2s"}}
+                  onMouseEnter={e=>{e.target.style.background="#3a7a4a";e.target.style.color="#90d0a0";}}
+                  onMouseLeave={e=>{e.target.style.background="#2a5a3a";e.target.style.color="#5aaa7a";}}>
+                  ADD TO MY WARDROBE ✓
+                </button>
+              </div>
+            )}
+
+            {/* Manual add fallback */}
+            {!selectedResult && searchResults.length===0 && !searching && (
+              <div style={{marginTop:8}}>
+                <div style={{borderTop:"1px solid #1a1a1a",paddingTop:24,marginTop:8}}>
+                  <div style={{fontSize:10,color:"#444",letterSpacing:2,marginBottom:16}}>OR ADD MANUALLY</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+                    <div style={{gridColumn:"1/-1"}}>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>ITEM NAME</div>
+                      <input value={addForm.name} onChange={e=>setAddForm({...addForm,name:e.target.value})} placeholder="e.g. Navy Quarter-Zip" style={inp()}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>BRAND</div>
+                      <input value={addForm.brand} onChange={e=>setAddForm({...addForm,brand:e.target.value})} placeholder="e.g. Peter Millar" style={inp({fontSize:12})}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>PRICE (optional)</div>
+                      <input value={addForm.price} onChange={e=>setAddForm({...addForm,price:e.target.value})} placeholder="$0" style={inp({fontSize:12})}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>CATEGORY</div>
+                      <select value={addForm.category} onChange={e=>setAddForm({...addForm,category:e.target.value,type:TYPE_OPTIONS[e.target.value][0]})} style={inp({fontSize:12})}>
+                        {CATEGORY_OPTIONS.map(c=><option key={c} value={c}>{categoryLabels[c]}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>TYPE</div>
+                      <select value={addForm.type} onChange={e=>setAddForm({...addForm,type:e.target.value})} style={inp({fontSize:12})}>
+                        {(TYPE_OPTIONS[addForm.category]||[]).map(t=><option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div style={{gridColumn:"1/-1"}}>
+                      <div style={{fontSize:10,color:"#555",letterSpacing:1,marginBottom:6}}>COLOR</div>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <input type="color" value={addForm.color} onChange={e=>setAddForm({...addForm,color:e.target.value})} style={{width:44,height:38,border:"1px solid #333",borderRadius:6,background:"#1a1a1a",cursor:"pointer",padding:2}}/>
+                        <input value={addForm.color} onChange={e=>setAddForm({...addForm,color:e.target.value})} style={{...inp({fontSize:12}),flex:1}}/>
+                        <div style={{width:38,height:38,borderRadius:6,background:addForm.color,border:"1px solid rgba(255,255,255,0.1)",flexShrink:0}}/>
+                      </div>
+                    </div>
+                  </div>
+                  {addForm.name && (
+                    <button onClick={()=>{setSelectedResult({});}} style={{width:"100%",padding:"12px",background:"#1a2a1a",color:"#5aaa7a",border:"1px solid #2a5a3a",borderRadius:8,cursor:"pointer",fontSize:11,letterSpacing:2,fontFamily:"Georgia, serif",marginTop:16}}>
+                      PREVIEW & CONFIRM →
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Recently added */}
+            {Object.values(customItems).flat().length>0 && (
+              <div style={{marginTop:32,paddingTop:24,borderTop:"1px solid #1a1a1a"}}>
+                <div style={{fontSize:10,color:"#555",letterSpacing:2,marginBottom:14}}>RECENTLY ADDED · {Object.values(customItems).flat().length} ITEM{Object.values(customItems).flat().length!==1?"S":""}</div>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {Object.entries(customItems).flatMap(([cat,items])=>items.map(item=>({...item,cat}))).map((item,i)=>(
+                    <div key={i} style={{background:"#1a1a1a",border:"1px solid #252525",borderRadius:8,padding:"10px 14px",display:"flex",alignItems:"center",gap:12}}>
+                      <div style={{width:28,height:28,borderRadius:5,background:item.color,border:"1px solid rgba(255,255,255,0.08)",flexShrink:0}}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:12,color:"#e8e0d0"}}>{item.name}</div>
+                        <div style={{fontSize:10,color:"#555",marginTop:2}}>{categoryLabels[item.cat]} · {item.type}</div>
+                      </div>
+                      <span style={{fontSize:9,color:"#5aaa7a",background:"rgba(90,170,122,0.1)",border:"1px solid #2a5a3a",borderRadius:10,padding:"2px 8px",letterSpacing:1}}>NEW</span>
+                      <button onClick={()=>removeCustomItem(item.cat,item.id)} style={{background:"transparent",border:"none",color:"#444",cursor:"pointer",fontSize:14,padding:"4px",lineHeight:1}} title="Remove">✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SHOP */}
+        {activeTab==="shop" && (
+          <div>
+            <div style={{marginBottom:24}}>
+              <div style={{fontSize:15,color:"#c8a04a",letterSpacing:2,marginBottom:8}}>✦ CURATED PICKS FOR YOUR STYLE</div>
+              <div style={{fontSize:12,color:"#555",lineHeight:1.7}}>Chosen to complement what you already own — filling palette gaps, adding missing silhouettes, and elevating your existing wardrobe.</div>
+            </div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:24}}>
+              {SHOP_PICKS.map(cat=>(
+                <button key={cat.category} onClick={()=>setShopCategory(cat.category)} style={{padding:"7px 16px",background:shopCategory===cat.category?"#c8a04a":"#1a1a1a",color:shopCategory===cat.category?"#0f0f0f":"#777",border:`1px solid ${shopCategory===cat.category?"#c8a04a":"#2a2a2a"}`,borderRadius:20,cursor:"pointer",fontSize:11,fontFamily:"Georgia, serif",fontWeight:shopCategory===cat.category?"bold":"normal"}}>{cat.category}</button>
+              ))}
+            </div>
+            {SHOP_PICKS.filter(c=>c.category===shopCategory).map(cat=>(
+              <div key={cat.category} style={{display:"flex",flexDirection:"column",gap:14}}>
+                {cat.items.map((item,i)=>(
+                  <div key={i} style={{background:"#1a1a1a",border:"1px solid #252525",borderRadius:12,padding:"20px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,width:3,height:"100%",background:"#c8a04a",borderRadius:"12px 0 0 12px"}}/>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                      <div style={{paddingLeft:8}}>
+                        <div style={{fontSize:15,color:"#e8e0d0",marginBottom:4}}>{item.name}</div>
+                        <div style={{fontSize:11,color:"#c8a04a",letterSpacing:1}}>{item.brand} · {item.price}</div>
+                      </div>
+                      <a href={item.link} target="_blank" rel="noopener noreferrer" style={{padding:"7px 16px",background:"transparent",color:"#c8a04a",border:"1px solid #c8a04a",borderRadius:6,fontSize:10,letterSpacing:2,fontFamily:"Georgia, serif",textDecoration:"none",whiteSpace:"nowrap",marginLeft:12,cursor:"pointer"}}>SHOP →</a>
+                    </div>
+                    <div style={{paddingLeft:8,fontSize:12,color:"#555",lineHeight:1.65,borderTop:"1px solid #1e1e1e",paddingTop:12,marginTop:4}}>
+                      <span style={{color:"#5a8a7a"}}>💡</span> {item.why}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {toast && (
+        <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",background:"#252525",color:"#e8e0d0",padding:"12px 24px",borderRadius:8,fontSize:13,border:"1px solid #3a3a3a",boxShadow:"0 4px 20px rgba(0,0,0,0.6)",zIndex:1000,animation:"fadeIn 0.2s ease"}}>{toast}</div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn { from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);} }
+        @keyframes spin { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+        select option { background: #1a1a1a; color: #e8e0d0; }
+        input::placeholder { color: #444; }
+      `}</style>
     </div>
   );
 }
-
-export default App;
